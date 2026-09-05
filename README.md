@@ -103,3 +103,187 @@ The default compose service uses `ipc: host`, a disposable container, and privat
 ## Coverage expectations
 
 The journey list is the business-feature manifest. Every configured ID must tag at least one feature. Review role coverage, state transitions, negative cases, and table behavior separately; control-value coverage alone does not prove feature coverage.
+
+For a new web application, clone the repository, configure one YAML file, add credentials locally, run preflight, and let Windsurf generate the tests.
+
+## 1. Clone and install
+
+Requirements:
+
+- Node.js 20+
+- Docker Desktop running
+- Windsurf or another coding agent
+
+```bash
+git clone https://github.com/harishkaparwan/zero-code-testing.git
+cd zero-code-testing
+npm install
+cp .env.example .env
+```
+
+## 2. Configure the application
+
+Edit `e2e.config.yaml`:
+
+```yaml
+app:
+  name: my-web-application
+  url: https://staging.myapp.com
+  start_url: https://staging.myapp.com/login
+  environment: staging
+
+  # Set true only when you are authorized to create/edit data.
+  authorization_confirmed: true
+
+preflight:
+  enabled: true
+  timeout_ms: 30000
+  max_age_minutes: 30
+  run_before_execution: true
+  screenshot: true
+  fail_on_console_errors: false
+  fail_on_request_errors: false
+  allowed_redirect_origins: []
+
+  pages:
+    - id: login-page
+      path: /login
+      status_range: [200, 399]
+      expect:
+        selector: 'input[type="password"]'
+
+discovery:
+  enabled: true
+  max_pages: 30
+  follow_links: true
+  start_paths: [/login]
+  include_path_prefixes: [/]
+  exclude_path_patterns:
+    - /logout
+    - /delete
+    - /checkout
+  ignore_text_patterns: []
+  timeout_ms: 30000
+
+roles:
+  - name: creator
+    username_env: E2E_CREATOR_USERNAME
+    password_env: E2E_CREATOR_PASSWORD
+
+  - name: approver
+    username_env: E2E_APPROVER_USERNAME
+    password_env: E2E_APPROVER_PASSWORD
+
+journeys:
+  - id: item-create
+    role: creator
+    mutates: true
+    paths: [/items, /items/new]
+    description: Create an a new item and verify it appears in the table.
+    tags: [smoke, regression]
+
+  - id: item-approve
+    role: approver
+    mutates: true
+    paths: [/items]
+    description: Approve a a pending item and verify its status.
+    tags: [smoke, regression]
+
+  - id: item-table
+    role: creator
+    mutates: false
+    paths: [/items]
+    description: Verify table columns, filters, sorting and pagination.
+    tags: [regression]
+```
+
+## 3. Add credentials
+
+Edit `.env`:
+
+```dotenv
+E2E_CREATOR_USERNAME=creator@example.com
+E2E_CREATOR_PASSWORD=creator-password
+
+E2E_APPROVER_USERNAME=approver@example.com
+E2E_APPROVER_PASSWORD=approver-password
+```
+
+Never commit `.env`.
+
+## 4. Validate and and run preflight
+
+```bash
+npm run validate:config
+npm run preflight
+```
+
+Preflight must pass before test generation. Results appear under:
+
+```text
+reports/preflight/
+```
+
+## 5. Generate tests with Windsurf
+
+Open the repository in Windsurf and enter:
+
+```text
+Use $zero-code-e2e-runner.
+
+Read SKILL.md and e2e.config.yaml. Run validation configuration validation and and
+browser preflight. Explore the authorized staging application, generate the
+Playwright BDD suite under suite/, cover every configured journey and role,
+then run the coverage gate and smoke tests.
+
+Do not print credentials or perform operations outside the configured journeys.
+```
+
+Windsurf will create:
+
+```text
+suite/
+├── features/
+├── pages/
+├── steps/
+├── support/
+├── playwright.config.ts
+└── package.json
+```
+
+## 6. Run tests
+
+```bash
+npm run coverage:check
+npm run run:smoke
+npm run run
+```
+
+Reports and evidence are stored under:
+
+```text
+suite/reports/html/
+suite/reports/last-run.json
+suite/artifacts/
+```
+
+## 7. Save the initial application baseline
+
+After all generated tests pass:
+
+```bash
+npm run sync
+npm run sync:accept
+git add .
+git commit -m "test: add E2E coverage for my application"
+```
+
+For future application releases:
+
+```bash
+git pull
+npm install
+npm run sync
+```
+
+Then review `reports/sync/change-report.md`, update only impacted tests, run regression, and execute `npm run sync:accept`.
