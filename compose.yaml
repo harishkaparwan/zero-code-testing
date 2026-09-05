@@ -1,0 +1,52 @@
+services:
+  preflight:
+    build:
+      context: .
+    init: true
+    ipc: host
+    environment:
+      E2E_CONFIG: /work/config/e2e.config.yaml
+      PREFLIGHT_REPORT_DIR: /work/reports/preflight
+    volumes:
+      - ./e2e.config.yaml:/work/config/e2e.config.yaml:ro
+      - ./reports:/work/reports
+    working_dir: /runner
+    entrypoint: ["node"]
+    command: ["/runner/scripts/preflight-browser.mjs"]
+
+  discovery:
+    build:
+      context: .
+    init: true
+    ipc: host
+    environment:
+      E2E_CONFIG: /work/config/e2e.config.yaml
+      DISCOVERY_OUTPUT: /work/reports/sync/current-inventory.json
+    volumes:
+      - ./e2e.config.yaml:/work/config/e2e.config.yaml:ro
+      - ./reports:/work/reports
+    working_dir: /runner
+    entrypoint: ["node"]
+    command: ["/runner/scripts/discover-browser.mjs"]
+
+  e2e:
+    build:
+      context: .
+    init: true
+    ipc: host
+    env_file:
+      - .env
+    environment:
+      CI: "true"
+      WORKERS: ${WORKERS:-1}
+      RETRIES: ${RETRIES:-1}
+    volumes:
+      - ./suite:/work/suite
+      - suite_node_modules:/work/suite/node_modules
+      - suite_features_gen:/work/suite/.features-gen
+    working_dir: /work/suite
+    command: ["npm", "test"]
+
+volumes:
+  suite_node_modules:
+  suite_features_gen:

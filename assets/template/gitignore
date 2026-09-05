@@ -1,0 +1,10 @@
+node_modules/
+.features-gen/
+artifacts/
+reports/html/
+reports/last-run.json
+test-results/
+playwright-report/
+.auth/
+.env
+*.log

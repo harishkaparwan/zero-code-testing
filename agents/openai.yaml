@@ -1,0 +1,7 @@
+interface:
+  display_name: "Zero-Code E2E Runner"
+  short_description: "Generate, sync, and run role-aware web E2E tests"
+  default_prompt: "Use $zero-code-e2e-runner to preflight, generate or incrementally synchronize, and run authorized role-based E2E tests from e2e.config.yaml."
+
+policy:
+  allow_implicit_invocation: true

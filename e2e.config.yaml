@@ -1,0 +1,121 @@
+# Portable configuration for the zero-code E2E utility.
+# Never put passwords or access tokens in this file. Reference environment names instead.
+
+app:
+  name: offers-app
+  url: https://staging.example.com
+  start_url: https://staging.example.com/
+  environment: staging
+  authorization_confirmed: false
+
+# Mandatory browser gate. Test generation is blocked until these pages render successfully.
+preflight:
+  enabled: true
+  timeout_ms: 30000
+  max_age_minutes: 30
+  run_before_execution: true
+  screenshot: true
+  fail_on_console_errors: false
+  fail_on_request_errors: false
+  # Add an identity-provider origin here only when an authorized login redirect requires it.
+  allowed_redirect_origins: []
+  pages:
+    - id: start-page
+      wait_until: domcontentloaded
+      status_range: [200, 399]
+      minimum_dom_chars: 20
+      expect:
+        selector: body
+
+# Read-only semantic discovery used by `npm run sync` to detect application changes.
+discovery:
+  enabled: true
+  max_pages: 30
+  follow_links: true
+  start_paths: [/]
+  include_path_prefixes: [/]
+  exclude_path_patterns:
+    - /logout
+    - /signout
+    - /delete
+    - /remove
+    - /cancel
+    - /approve
+    - /checkout
+  # Add regular expressions for known timestamps/build IDs that would otherwise create noisy diffs.
+  ignore_text_patterns: []
+  timeout_ms: 30000
+
+roles:
+  - name: creator
+    username_env: E2E_CREATOR_USERNAME
+    password_env: E2E_CREATOR_PASSWORD
+    description: Creates and edits offers
+  - name: approver
+    username_env: E2E_APPROVER_USERNAME
+    password_env: E2E_APPROVER_PASSWORD
+    description: Approves offers
+  - name: viewer
+    username_env: E2E_VIEWER_USERNAME
+    password_env: E2E_VIEWER_PASSWORD
+    description: Views the offer table
+
+model_policy:
+  # Use a local/free coding model if Windsurf or your orchestrator supports it.
+  code_generation:
+    provider: local
+    model: qwen2.5-coder
+  # Routine execution is deterministic Playwright; no model is required.
+  execution:
+    provider: none
+    model: deterministic
+  # Optional: use a low-cost model only to explain failures or select an existing journey.
+  failure_analysis:
+    provider: openai-compatible
+    model: low
+    enabled: false
+  # Optional fallback for genuinely ambiguous new workflows.
+  escalation:
+    provider: openai-compatible
+    model: high
+    enabled: false
+    after_failed_attempts: 2
+
+execution:
+  mode: smoke
+  safe_mode: true
+  workers: 1
+  retries: 1
+  browser: chromium
+
+journeys:
+  - id: offer-create
+    role: creator
+    mutates: true
+    paths: [/offers, /offers/new]
+    description: Create a valid offer and verify it appears in the offer table.
+    tags: [smoke, regression]
+  - id: offer-edit
+    role: creator
+    mutates: true
+    paths: [/offers]
+    description: Edit a draft offer and verify the updated values.
+    tags: [regression]
+  - id: offer-approve
+    role: approver
+    mutates: true
+    paths: [/offers]
+    description: Approve a pending offer and verify its status.
+    tags: [smoke, regression]
+  - id: offer-cancel
+    role: creator
+    mutates: true
+    paths: [/offers]
+    description: Cancel a cancellable offer and verify its final status.
+    tags: [regression]
+  - id: offer-table
+    role: viewer
+    mutates: false
+    paths: [/offers]
+    description: Verify columns, search, filters, sorting, pagination, and empty state.
+    tags: [smoke, regression]

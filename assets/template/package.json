@@ -1,0 +1,24 @@
+{
+  "name": "__PROJECT_NAME__",
+  "version": "1.0.0",
+  "private": true,
+  "description": "End-to-end tests for __APP_NAME__",
+  "scripts": {
+    "setup": "npm install && npx playwright install chromium",
+    "test": "bddgen && playwright test",
+    "test:smoke": "bddgen && playwright test --grep @smoke",
+    "test:desktop": "bddgen && playwright test --project=desktop",
+    "test:headed": "bddgen && playwright test --project=desktop --headed",
+    "test:ui": "bddgen && playwright test --ui",
+    "list": "bddgen && playwright test --list",
+    "verify": "node verify.mjs",
+    "report": "playwright show-report reports/html"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.20.0",
+    "dotenv": "^17.4.2",
+    "playwright-bdd": "^9.2.0",
+    "typescript": "^6.0.3"
+  }
+}

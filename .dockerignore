@@ -1,0 +1,9 @@
+.git
+.env
+node_modules
+suite/node_modules
+suite/.features-gen
+suite/.auth
+suite/artifacts
+reports/html
+*.log

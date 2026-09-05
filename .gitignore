@@ -1,0 +1,16 @@
+.env
+.DS_Store
+.env.*
+!.env.example
+node_modules/
+suite/node_modules/
+suite/.features-gen/
+suite/.auth/
+suite/artifacts/
+suite/reports/html/
+suite/reports/last-run.json
+reports/html/
+reports/last-run.json
+reports/preflight/
+reports/sync/
+*.log
