@@ -21,7 +21,7 @@
   "dependencies": {
     "dotenv": "^17.4.2",
     "playwright": "1.63.0",
-    "yaml": "^2.8.1"
+    "yaml": "^2.9.1"
   },
   "engines": {
     "node": ">=20"
